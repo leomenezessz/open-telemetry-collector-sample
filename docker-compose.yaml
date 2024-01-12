@@ -1,0 +1,14 @@
+version: "3"
+
+services:
+  otel-collector:
+    build:
+        context: .
+        dockerfile: Dockerfile
+    ports:
+      - "13133:13133" # OTLP Health Check
+      - "4317:4317" # OTLP gRPC receiver
+      - "4318:4318" # OTLP http receiver
+    env_file:
+      - ".env"
+

@@ -1,0 +1,74 @@
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318  # HTTP receiver endpoint inside collector service
+      grpc:
+        endpoint: 0.0.0.0:4317 # grpc receiver inside collector service
+
+  # The hostmetrics receiver is required to get correct infrastructure metrics in Datadog.
+
+  hostmetrics:
+    collection_interval: 10s
+    scrapers:
+      paging:
+        metrics:
+          system.paging.utilization:
+            enabled: true
+      cpu:
+        metrics:
+          system.cpu.utilization:
+            enabled: true
+      disk:
+      filesystem:
+        metrics:
+          system.filesystem.utilization:
+            enabled: true
+      load:
+      memory:
+      network:
+      processes:
+
+  filelog:
+    include_file_path: true
+    poll_interval: 500ms
+    include:
+      - /var/log/**/*example*/*.log
+
+
+  # Internal collector processor configuration.
+
+processors:
+  batch:
+    send_batch_max_size: 100
+    send_batch_size: 10
+    timeout: 10s
+
+  # Internal collector exporters debug to see incoming data in collector console and datadog to send data to datadog service.
+
+exporters:
+  debug:
+    verbosity: detailed
+  datadog:
+    api:
+      site: ${DATADOG_SITE}
+      key: ${DATADOG_API_KEY}
+  sentry:
+    dsn: ${SENTRY_DNS}
+
+  # Service pipelines configuration in order to receive, process and export data to backend services.
+
+service:
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      exporters: [debug, datadog ]
+      processors: [batch]
+    traces:
+      receivers: [otlp]
+      exporters: [debug, datadog, sentry]
+      processors: [batch]
+    logs:
+      receivers: [otlp, filelog]
+      exporters: [debug, datadog ]
+      processors: [batch]

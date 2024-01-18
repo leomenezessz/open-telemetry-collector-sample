@@ -1,0 +1,9 @@
+Django==3.2.23
+protobuf==3.20.2
+opentelemetry-sdk==1.21.0
+opentelemetry-exporter-otlp-proto-grpc==1.21.0
+opentelemetry-instrumentation-requests==0.42b0
+opentelemetry-instrumentation-fastapi==0.42b0
+requests==2.31.0
+fastapi==0.109.0
+uvicorn==0.26.0

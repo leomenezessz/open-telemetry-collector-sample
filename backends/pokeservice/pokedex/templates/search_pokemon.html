@@ -1,0 +1,38 @@
+<form action="/pokemon" method="post">
+    {% csrf_token %}
+
+    {% for field in form %}
+    <div class="fieldWrapper">
+        {{ field.errors }}
+        {{ field.label_tag }} {{ field }}
+    </div>
+    {% endfor %}
+
+    <input type="submit" value="Submit">
+</form>
+
+{% if pokemon %}
+<table>
+    <tr>
+        <td>
+            <img src="{{ pokemon.sprite }}" alt="{{ pokemon.name }}">
+        </td>
+    <tr>
+        <td>
+            Name: {{ pokemon.name }}
+        </td>
+    </tr>
+    <tr>
+        <td>
+            height: {{ pokemon.height }}
+        </td>
+    </tr>
+    <tr>
+        <td>
+            weight: {{ pokemon.weight }}
+        </td>
+    </tr>
+</table>
+
+{% endif %}
+

@@ -1,0 +1,86 @@
+version: '3'
+
+volumes:
+  pokeservice_database_data:
+
+services:
+  pokeservice:
+    container_name: pokeservice
+    build:
+      context: .
+      dockerfile: Dockerfile.pokeservice
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backends/pokeservice/:/srv/app/
+    environment:
+      POKEAPI_URL: http://pokeapi:8081
+      DATABASE_NAME: postgres
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: postgres
+      DATABASE_HOST: pokeservice_database
+      DATABASE_PORT: 5432
+      SERVICE_NAME: pokeservice
+      GRPC_RECEIVER_ENDPOINT: otel-collector:4317
+    command: gunicorn --bind 0.0.0.0:8000 --workers 1 --reload --chdir=/srv/app/ pokeservice.wsgi:application
+    depends_on:
+      - pokeservice_database
+      - pokeapi
+      - otel-collector
+
+  pokeapi:
+    container_name: pokeapi
+    build:
+      context: .
+      dockerfile: Dockerfile.pokeapi
+    ports:
+      - "8081:8081"
+    environment:
+      POKEMON_EXTERNAL_API_URL: https://pokeapi.co
+      SERVICE_NAME: pokeapi
+      GRPC_RECEIVER_ENDPOINT: otel-collector:4317
+    volumes:
+      - ./backends/pokeapi/:/code/app/
+    command: uvicorn main:app --host 0.0.0.0 --port 8081
+    depends_on:
+      - otel-collector
+
+
+  pokeservice_database:
+    container_name: pokeservice_database
+    image: postgres:11
+    volumes:
+      - pokeservice_database_data:/var/lib/postgresql/data/
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: postgres
+      DATABASE_NAME: postgres
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: postgres
+      DATABASE_HOST: pokeservice_database
+      DATABASE_PORT: 5432
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.92.0
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml
+    ports:
+      - "13133:13133" # OTLP Health Check
+      - "4317:4317" # OTLP gRPC receiver
+      - "4318:4318" # OTLP http receiver
+    environment:
+      DATADOG_API_KEY: ${DATADOG_API_KEY}
+      DATADOG_SITE: ${DATADOG_SITE}
+      SENTRY_DNS: ${SENTRY_DNS}
+      GRPC_RECEIVER_ENDPOINT: 0.0.0.0:4317
+      HTTP_RECEIVER_ENDPOINT: 0.0.0.0:4318
+
+
+
+
+
+
+
+
+
